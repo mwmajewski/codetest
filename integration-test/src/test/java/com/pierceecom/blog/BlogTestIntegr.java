@@ -61,13 +61,13 @@ public class BlogTestIntegr {
     
     @Test
     public void test_5_DeletePosts() {
-        DELETE(POSTS_URI + "1", 200);        
+        DELETE(POSTS_URI + "1", 202);
         // Should now be gone
-        GET(POSTS_URI + "1", 204);
+        GET(POSTS_URI + "1", 404);
 
-        DELETE(POSTS_URI + "2", 200);        
+        DELETE(POSTS_URI + "2", 202);
         // Should now be gone
-        GET(POSTS_URI + "2", 204);      
+        GET(POSTS_URI + "2", 404);
 
     }
 
