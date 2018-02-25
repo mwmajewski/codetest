@@ -4,6 +4,11 @@ import java.util.Objects;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+/**
+ * When a List<PostDto> is used as the response entity it should be wrapped with GenericEntity
+ * example: Response.ok(new GenericEntity<List<PostDto>>(postDtoList){}).build();
+ * In such case it's required that all properties that should be (un)marshalled have their setters in place
+ */
 @XmlRootElement
 @XmlType(propOrder = {"id","title","content"})
 public class PostDto {
@@ -32,12 +37,24 @@ public class PostDto {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getTitle() {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getContent() {
         return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     @Override
