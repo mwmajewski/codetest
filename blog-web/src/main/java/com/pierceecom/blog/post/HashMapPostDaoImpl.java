@@ -28,7 +28,7 @@ public class HashMapPostDaoImpl implements PostDao {
     }
 
     @Override
-    public synchronized void remove(@NotNull String id) throws PostNotFoundException {
+    public void remove(@NotNull String id) throws PostNotFoundException {
         synchronized(postStore) {
             checkPostExists(id);
             postStore.remove(id);
@@ -36,7 +36,7 @@ public class HashMapPostDaoImpl implements PostDao {
     }
 
     @Override
-    public synchronized void update(@NotNull Post post) throws PostNotFoundException {
+    public void update(@NotNull Post post) throws PostNotFoundException {
         synchronized(postStore) {
             String id = post.getId();
             checkPostExists(id);
