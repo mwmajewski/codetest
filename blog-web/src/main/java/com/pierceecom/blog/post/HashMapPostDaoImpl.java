@@ -57,6 +57,6 @@ public class HashMapPostDaoImpl implements PostDao {
 
     @Override
     public List<Post> findAll() {
-        return new ArrayList(postStore.values());
+        return new ArrayList<>(postStore.values());
     }
 }
