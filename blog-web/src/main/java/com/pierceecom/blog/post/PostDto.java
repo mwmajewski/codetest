@@ -1,22 +1,33 @@
 package com.pierceecom.blog.post;
 
 import java.util.Objects;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
-public class Post {
+@XmlRootElement
+@XmlType(propOrder = {"id","title","content"})
+public class PostDto {
 
     private String id;
     private String title;
     private String content;
 
-    Post() {
+    PostDto() {
     }
 
-    Post(String id, String title, String content) {
+    PostDto(String id, String title, String content) {
         this.id = id;
         this.title = title;
         this.content = content;
     }
 
+    static PostDto toPostDto(Post post) {
+        return new PostDto(post.getId(), post.getTitle(), post.getContent());
+    }
+
+    Post toPost() {
+        return new Post(getId(), getTitle(), getContent());
+    }
     public String getId() {
         return id;
     }
@@ -38,7 +49,7 @@ public class Post {
             return false;
         }
 
-        Post post = (Post) o;
+        PostDto post = (PostDto) o;
         return Objects.equals(id, post.id) &&
                 Objects.equals(title, post.title) &&
                 Objects.equals(content, post.content);

@@ -26,9 +26,11 @@ import static org.mockito.Mockito.verify;
 @RunWith(MockitoJUnitRunner.class)
 public class BlogPostResourceTest {
 
-    public static final String RESOURCE_URL = "http://localhost:8080/blog";
+    private static final String RESOURCE_URL = "http://localhost:8080/blog";
     private static String ID_POST_1 = "1";
+    private static PostDto POST_DTO_1 = new PostDto(ID_POST_1, "1st title", "1st content");
     private static Post POST_1 = new Post(ID_POST_1, "1st title", "1st content");
+    private static PostDto POST_DTO_2 = new PostDto("2", "2nd title", "2nd content");
     private static Post POST_2 = new Post("2", "2nd title", "2nd content");
 
     @Mock
@@ -40,7 +42,7 @@ public class BlogPostResourceTest {
     private BlogPostResource sut;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         sut = new BlogPostResource(dao);
     }
 
@@ -52,7 +54,7 @@ public class BlogPostResourceTest {
         Response response = sut.findPost(ID_POST_1);
         //then
         assertThat(response.getStatus(), equalTo(Status.OK.getStatusCode()));
-        assertThat(response.getEntity(), equalTo(POST_1));
+        assertThat(response.getEntity(), equalTo(POST_DTO_1));
         verify(dao, times(1)).findById(ID_POST_1);
     }
 
@@ -68,14 +70,16 @@ public class BlogPostResourceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReturnAllPosts(){
         //given
-        given(dao.findAll()).willReturn(Stream.of(POST_1, POST_2).collect(Collectors.toList()));
+        given(dao.findAll()).willReturn(Stream.of(POST_1, POST_2)
+                                              .collect(Collectors.toList()));
         //when
         Response response = sut.getAllPosts();
         //then
         assertThat(response.getStatus(), equalTo(Status.OK.getStatusCode()));
-        assertThat((List<Post>)response.getEntity(), hasItems(POST_1, POST_2));
+        assertThat((List<PostDto>)response.getEntity(), hasItems(POST_DTO_1, POST_DTO_2));
         verify(dao, times(1)).findAll();
     }
 
@@ -105,7 +109,7 @@ public class BlogPostResourceTest {
         //given
         given(uriInfo.getPath()).willReturn(RESOURCE_URL);
         //when
-        Response response = sut.addPost(POST_1, uriInfo);
+        Response response = sut.addPost(POST_DTO_1, uriInfo);
         //then
         assertThat(response.getStatus(), equalTo(Status.CREATED.getStatusCode()));
         assertThat(response.getHeaderString(HttpHeaders.LOCATION), equalTo(RESOURCE_URL + "/" + ID_POST_1));
@@ -117,7 +121,7 @@ public class BlogPostResourceTest {
         //given
         willThrow(PostAlreadyExistsException.class).given(dao).add(POST_1);
         //when
-        Response response = sut.addPost(POST_1, uriInfo);
+        Response response = sut.addPost(POST_DTO_1, uriInfo);
         //then
         assertThat(response.getStatus(), equalTo(Status.METHOD_NOT_ALLOWED.getStatusCode()));
         verify(dao, times(1)).add(POST_1);
@@ -128,7 +132,7 @@ public class BlogPostResourceTest {
         //given
         given(uriInfo.getPath()).willReturn(RESOURCE_URL);
         //when
-        Response response = sut.updatePost(POST_1, uriInfo);
+        Response response = sut.updatePost(POST_DTO_1, uriInfo);
         //then
         assertThat(response.getStatus(), equalTo(Status.CREATED.getStatusCode()));
         assertThat(response.getHeaderString(HttpHeaders.LOCATION), equalTo(RESOURCE_URL + "/" + ID_POST_1));
@@ -140,7 +144,7 @@ public class BlogPostResourceTest {
         //given
         willThrow(PostNotFoundException.class).given(dao).update(POST_1);
         //when
-        Response response = sut.updatePost(POST_1, uriInfo);
+        Response response = sut.updatePost(POST_DTO_1, uriInfo);
         //then
         assertThat(response.getStatus(), equalTo(Status.NOT_FOUND.getStatusCode()));
         verify(dao, times(1)).update(POST_1);

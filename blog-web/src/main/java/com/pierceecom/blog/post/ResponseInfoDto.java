@@ -3,22 +3,18 @@ package com.pierceecom.blog.post;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class ResponseInfo {
+public class ResponseInfoDto {
 
     private String message;
 
-    public ResponseInfo() {
+    public ResponseInfoDto() {
     }
 
-    public ResponseInfo(String message) {
+    ResponseInfoDto(String message) {
         this.message = message;
     }
 
     public String getMessage() {
         return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 }

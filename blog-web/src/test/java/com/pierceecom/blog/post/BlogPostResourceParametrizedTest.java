@@ -18,7 +18,7 @@ public class BlogPostResourceParametrizedTest {
     private BlogPostResource sut;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         sut = new BlogPostResource(null);
     }
 
@@ -30,10 +30,10 @@ public class BlogPostResourceParametrizedTest {
             ",,content",
             ",title,",
             ",title,content"})
-    public void shouldReturnMethodNotAllowedOnCreateInvalidPost(String id, String title, String content) throws PostAlreadyExistsException {
+    public void shouldReturnMethodNotAllowedOnCreateInvalidPost(String id, String title, String content) {
         //given
         //when
-        Response response = sut.addPost(new Post(id, title, content), null);
+        Response response = sut.addPost(new PostDto(id, title, content), null);
         //then
         assertThat(response.getStatus(), equalTo(Status.METHOD_NOT_ALLOWED.getStatusCode()));
     }
@@ -46,10 +46,10 @@ public class BlogPostResourceParametrizedTest {
             ",,content",
             ",title,",
             ",title,content"})
-    public void shouldReturnMethodNotAllowedOnUpdateNonExistingPost(String id, String title, String content) throws PostNotFoundException {
+    public void shouldReturnMethodNotAllowedOnUpdateNonExistingPost(String id, String title, String content) {
         //given
         //when
-        Response response = sut.updatePost(new Post(id, title, content), null);
+        Response response = sut.updatePost(new PostDto(id, title, content), null);
         //then
         assertThat(response.getStatus(), equalTo(Status.METHOD_NOT_ALLOWED.getStatusCode()));
     }

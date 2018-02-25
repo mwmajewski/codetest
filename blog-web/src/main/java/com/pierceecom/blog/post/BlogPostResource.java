@@ -19,25 +19,27 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import static com.pierceecom.blog.post.PostDto.toPostDto;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @RequestScoped
 @Path("posts")
 public class BlogPostResource {
 
-    public static final String POST_NOT_FOUND = "Post not found";
-    public static final String INVALID_INPUT = "Invalid input";
+    private static final String POST_NOT_FOUND = "Post not found";
+    private static final String INVALID_INPUT = "Invalid input";
 
     private PostDao dao;
 
     BlogPostResource(){}
 
     @Inject
-    public BlogPostResource(PostDao dao) {
+    BlogPostResource(PostDao dao) {
         this.dao = dao;
     }
 
@@ -46,18 +48,17 @@ public class BlogPostResource {
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Response findPost(@PathParam("postId") String postId) {
         Optional<Post> optionalResult = dao.findById(postId);
-        return optionalResult.map(post -> buildOkResponse(post)).orElseGet(() -> buildNotFoundResponse());
+        return optionalResult.map(post -> Response.ok(toPostDto(post)).build())
+                             .orElseGet(this::buildNotFoundResponse);
     }
 
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Response getAllPosts() {
-        List<Post> posts = dao.findAll();
-        return buildOkResponse(new GenericEntity<List<Post>>(posts){});
-    }
-
-    private Response buildOkResponse(Object entity) {
-        return Response.ok(entity).build();
+        List<PostDto> postDtoList = dao.findAll().stream()
+                                                 .map(PostDto::toPostDto)
+                                                 .collect(toList());
+        return Response.ok(new GenericEntity<List<PostDto>>(postDtoList){}).build();
     }
 
     @Path("/{postId}")
@@ -75,15 +76,15 @@ public class BlogPostResource {
     @POST
     @Consumes({APPLICATION_JSON, APPLICATION_XML})
     @Produces({APPLICATION_XML, APPLICATION_JSON})
-    public Response addPost(Post post, @Context UriInfo uriInfo) {
+    public Response addPost(PostDto postDto, @Context UriInfo uriInfo) {
 
-        if (!isValidPostFromRequest(post)){
+        if (isInvalidPostFromRequest(postDto)){
             return buildMethodNotAllowedResponse();
         }
 
         try {
-            dao.add(post);
-            return buildCreatedResponse(post, uriInfo);
+            dao.add(postDto.toPost());
+            return buildCreatedResponse(postDto, uriInfo);
         } catch (PostAlreadyExistsException e) {
             return buildMethodNotAllowedResponse();
         }
@@ -92,50 +93,53 @@ public class BlogPostResource {
     @PUT
     @Consumes({APPLICATION_JSON, APPLICATION_XML})
     @Produces({APPLICATION_XML, APPLICATION_JSON})
-    public Response updatePost(Post post, @Context UriInfo uriInfo) {
+    public Response updatePost(PostDto postDto, @Context UriInfo uriInfo) {
 
-        if (!isValidPostFromRequest(post)){
+        if (isInvalidPostFromRequest(postDto)){
             return buildMethodNotAllowedResponse();
         }
 
         try {
-            dao.update(post);
-            return buildCreatedResponse(post, uriInfo);
+            dao.update(postDto.toPost());
+            return buildCreatedResponse(postDto, uriInfo);
         } catch (PostNotFoundException e) {
             return buildNotFoundResponse();
         }
     }
 
-    private boolean isValidPostFromRequest(Post post) {
-        return Objects.nonNull(post) &&
-                isNotBlank(post.getContent()) &&
-                isNotBlank(post.getTitle()) &&
-                isNotBlank(post.getId());
+    private boolean isInvalidPostFromRequest(PostDto post) {
+        return Objects.isNull(post) ||
+                isBlank(post.getContent()) ||
+                isBlank(post.getTitle()) ||
+                isBlank(post.getId());
     }
 
-    private Response buildCreatedResponse(Post post, UriInfo uriInfo) {
-        return Response.created(getSinglePostLocation(post, uriInfo))
-                        .entity(post)
+    private Response buildCreatedResponse(PostDto postDto, UriInfo uriInfo) {
+        return Response.created(getSinglePostLocation(postDto, uriInfo))
+                        .entity(postDto)
                         .build();
     }
 
-    private URI getSinglePostLocation(Post post, UriInfo uriInfo) {
+    private URI getSinglePostLocation(PostDto postDto, UriInfo uriInfo) {
         String location = new StringBuilder().append(uriInfo.getPath())
                                             .append("/")
-                                            .append(post.getId())
+                                            .append(postDto.getId())
                                             .toString();
         return URI.create(location);
     }
 
     private Response buildNotFoundResponse() {
         return Response.status(NOT_FOUND)
-                        .entity(new ResponseInfo(POST_NOT_FOUND))
+                        .entity(new ResponseInfoDto(POST_NOT_FOUND))
                         .build();
     }
 
+    /**
+     * TODO consider switching from METHOD_NOT_ALLOWED to BAD_REQUEST as it seems more suitable here
+     */
     private Response buildMethodNotAllowedResponse() {
         return Response.status(METHOD_NOT_ALLOWED)
-                        .entity(new ResponseInfo(INVALID_INPUT))
+                        .entity(new ResponseInfoDto(INVALID_INPUT))
                         .build();
     }
 
